@@ -21,7 +21,6 @@ import re
 import os
 import sys
 import yaml
-from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
 from PIL import Image
 
 # For plotting messages / price charts

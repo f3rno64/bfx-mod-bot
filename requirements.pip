@@ -2,7 +2,6 @@ python-telegram-bot
 pymongo
 numpy
 python-dateutil
-wordcloud
 pyyaml
 requests
 matplotlib==2.1.2
