@@ -93,6 +93,8 @@ MESSAGES['start']           = config['MESSAGES']['start']
 MESSAGES['admin_start']     = config['MESSAGES']['admin_start']
 MESSAGES['rules']           = config['MESSAGES']['rules']
 MESSAGES['affiliate_link_warning']           = config['MESSAGES']['affiliate_link_warning']
+MESSAGES['new_user_mute_notice'] = config['MESSAGES']['new_user_mute_notice']
+MESSAGES['affiliate_link_mute_notice'] = config['MESSAGES']['affiliate_link_mute_notice']
 
 ADMINS_JSON                 = config['MESSAGES']['admins_json']
 ADMIN_ID = config['ADMIN_ID']
@@ -195,8 +197,6 @@ def rules(bot, update):
 	message_id = update.message.message_id
 	name = get_name(update)
 
-	logger.info("/rules - "+name)
-
 	if (update.message.chat.type == 'group') or (update.message.chat.type == 'supergroup'):
 		msg = random.choice(MESSAGES['pmme']) % (name)
 		bot.sendMessage(chat_id=chat_id,text=msg,reply_to_message_id=message_id, parse_mode="Markdown",disable_web_page_preview=1)
@@ -215,7 +215,6 @@ def admins(bot, update):
 	chat_id = update.message.chat.id
 	message_id = update.message.message_id
 	name = get_name(update)
-	logger.info("/admins - "+name)
 
 	if (update.message.chat.type == 'group') or (update.message.chat.type == 'supergroup'):
 		msg = random.choice(MESSAGES['pmme']) % (name)
@@ -301,9 +300,7 @@ def commandstats(bot, update):
 def new_chat_member(bot, update):
 	""" Welcomes new chat member """
 
-	logger.info('new_chat_member')
 	logger.info(update)
-	logger.info('----')
 
 	member = update.message.new_chat_members[0]
 	user_id = member.id
@@ -350,21 +347,26 @@ def new_chat_member(bot, update):
 
 	PRIOR_WELCOME_MESSAGE_ID[chat_id] = int(message.message_id)
 
-	logger.info('inserted new user')
-
 	db.users.insert({
 		'user_id': user_id,
 		'timestamp': timestamp
 	})
 
 	bot.restrict_chat_member(
-		chat_id, 
-		user_id, 
-		until_date=(datetime.datetime.now() + relativedelta(hours=MUTE_PERIOD_H)), 
-		can_send_messages=False, 
-		can_send_media_messages=False, 
-		can_send_other_messages=False, 
+		chat_id,
+		user_id,
+		until_date=(datetime.datetime.now() + relativedelta(hours=MUTE_PERIOD_H)),
+		can_send_messages=False,
+		can_send_media_messages=False,
+		can_send_other_messages=False,
 		can_add_web_page_previews=False
+	)
+
+	bot.sendMessage(
+		chat_id=user_id,
+		text=MESSAGES['new_user_mute_notice'],
+		parse_mode="Markdown",
+		disable_web_page_preview=1
 	)
 
 # Disabled
@@ -394,7 +396,7 @@ def log_message_private(bot, update):
 
 	logger.info("Private Log Message: "+name+" said: "+update.message.text)
 
-	# msg = bot.forwardMessage(chat_id=FORWARD_PRIVATE_MESSAGES_TO, from_chat_id=chat_id, message_id=message_id)
+	msg = bot.forwardMessage(chat_id=FORWARD_PRIVATE_MESSAGES_TO, from_chat_id=chat_id, message_id=message_id)
 
 	msg = bot.sendMessage(chat_id=chat_id, text=(MESSAGES['start'] % name),parse_mode="Markdown",disable_web_page_preview=1)
 
@@ -422,20 +424,19 @@ def echo(bot, update):
 	db.users.update_one( { 'user_id': user_id }, { "$set": info }, upsert=True)
 
 def on_delete_message(bot, update):
-	message_id = update.message.message_id 
+	message_id = update.message.message_id
 	chat_id = update.message.chat.id
 
 	bot.delete_message(chat_id=chat_id, message_id=message_id)
 
 def on_link_message(bot, update):
-	logger.info('on link msg')
 	user_id = update.message.from_user.id
 	message_id = update.message.message_id
 	chat_id = update.message.chat.id
 	name = get_name(update)
 	find_aff_link = re.findall(AFFILIATE_LINK_DETECTOR, update.message.text)
 
-	if (len(find_aff_link) == 0) or chat_id != BITFINEX_CHAT_ID:
+	if (len(find_aff_link) == 0):
 		return
 
 	reply = MESSAGES['affiliate_link_warning']
@@ -451,13 +452,26 @@ def on_link_message(bot, update):
 	bot.delete_message(chat_id=chat_id, message_id=message_id)
 	bot.sendMessage(chat_id=chat_id, text=reply, parse_mode="Markdown", disable_web_page_preview=1)
 
-	# Ban the bad actor
-	# TODO: Configurable
-	bot.kick_chat_member(chat_id=chat_id, user_id=user_id)
+	bot.sendMessage(
+		chat_id=user_id,
+		text=MESSAGES['affiliate_link_mute_notice'],
+		parse_mode="Markdown",
+		disable_web_page_preview=1
+	)
+
+	# Silence bad actor
+	bot.restrict_chat_member(
+		chat_id,
+		user_id,
+		until_date=(datetime.datetime.now() + relativedelta(hours=MUTE_PERIOD_H)),
+		can_send_messages=False,
+		can_send_media_messages=False,
+		can_send_other_messages=False,
+		can_add_web_page_previews=False
+	)
 
 #################################
 # Command Handlers
-logger.info("Setting  command handlers")
 updater = Updater(bot=bot,workers=10)
 dp      = updater.dispatcher
 
@@ -480,5 +494,4 @@ dp.add_error_handler(error)
 
 #################################
 # Polling
-logger.info("Starting polling")
 updater.start_polling()
