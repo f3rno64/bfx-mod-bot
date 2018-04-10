@@ -449,11 +449,9 @@ def on_link_message(bot, update):
 
 	# Replace message
 	bot.delete_message(chat_id=chat_id, message_id=message_id)
-	bot.sendMessage(chat_id=chat_id, text=reply, parse_mode="Markdown", disable_web_page_preview=1)
-
 	bot.sendMessage(
-		chat_id=user_id,
-		text=MESSAGES['affiliate_link_mute_notice'],
+		chat_id=chat_id,
+		text=(reply % (name)),
 		parse_mode="Markdown",
 		disable_web_page_preview=1
 	)
