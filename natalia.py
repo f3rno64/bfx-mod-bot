@@ -318,21 +318,6 @@ def new_chat_member(bot, update):
 	info = { 'user_id': user_id, 'chat_id': chat_id, 'timestamp': timestamp }
 	db.room_joins.insert(info)
 
-	profile_pics = bot.getUserProfilePhotos(user_id=user_id)
-
-	if profile_pics.total_count == 0:
-		logger.info("user %d tried to join without a profile picture" % (user_id))
-
-		bot.sendMessage(
-			chat_id=chat_id,
-			reply_to_message_id=message_id,
-			text='You need a profile picture to join this channel'
-		)
-
-		bot.kick_chat_member(chat_id=chat_id, user_id=user_id)
-
-		return
-
 	try:
 		if PRIOR_WELCOME_MESSAGE_ID[chat_id] > 0:
 			bot.delete_message(chat_id=chat_id, message_id=PRIOR_WELCOME_MESSAGE_ID[chat_id])
