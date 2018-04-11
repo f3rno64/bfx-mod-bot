@@ -361,13 +361,6 @@ def new_chat_member(bot, update):
 		can_add_web_page_previews=False
 	)
 
-	bot.sendMessage(
-		chat_id=user_id,
-		text=MESSAGES['new_user_mute_notice'],
-		parse_mode="Markdown",
-		disable_web_page_preview=1
-	)
-
 # Disabled
 def left_chat_member(bot, update):
 	logger.info(update)
