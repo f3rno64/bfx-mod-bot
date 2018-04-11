@@ -322,11 +322,14 @@ def new_chat_member(bot, update):
 
 	if profile_pics.total_count == 0:
 		logger.info("user %d tried to join without a profile picture" % (user_id))
+
 		bot.sendMessage(
 			chat_id=chat_id,
 			reply_to_message_id=message_id,
 			text='You need a profile picture to join this channel'
 		)
+
+		bot.kick_chat_member(chat_id=chat_id, user_id=user_id)
 
 		return
 
