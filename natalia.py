@@ -318,21 +318,21 @@ def new_chat_member(bot, update):
 	info = { 'user_id': user_id, 'chat_id': chat_id, 'timestamp': timestamp }
 	db.room_joins.insert(info)
 
-	try:
-		if PRIOR_WELCOME_MESSAGE_ID[chat_id] > 0:
-			bot.delete_message(chat_id=chat_id, message_id=PRIOR_WELCOME_MESSAGE_ID[chat_id])
-	except:
-		pass
+	# try:
+	# 	if PRIOR_WELCOME_MESSAGE_ID[chat_id] > 0:
+	# 		bot.delete_message(chat_id=chat_id, message_id=PRIOR_WELCOME_MESSAGE_ID[chat_id])
+	# except:
+	# 	pass
 
-	logger.info("welcoming new user - %s" % (name))
+	# logger.info("welcoming new user - %s" % (name))
 
-	message = bot.sendMessage(
-		chat_id=chat_id,
-		text=MESSAGES['welcome'] % (name),
-		parse_mode='Markdown'
-	)
+	# message = bot.sendMessage(
+	# 	chat_id=chat_id,
+	# 	text=MESSAGES['welcome'] % (name),
+	# 	parse_mode='Markdown'
+	# )
 
-	PRIOR_WELCOME_MESSAGE_ID[chat_id] = int(message.message_id)
+	# PRIOR_WELCOME_MESSAGE_ID[chat_id] = int(message.message_id)
 
 	db.users.insert({
 		'user_id': user_id,
